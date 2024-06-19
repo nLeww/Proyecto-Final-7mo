@@ -27,10 +27,11 @@ int touch=0;
 unsigned long optime;
 unsigned long blinktime;
 unsigned long interaction;
+unsigned long timenow;
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(115200);
     tft.reset();
     identifier = tft.readID();
     Serial.print("ID = 0x");
@@ -104,6 +105,9 @@ void normal(){
   //NO BLINK 
     tft.fillRect(100, 150, 40, 40, WHITE);
     tft.fillRect(320, 150, 40, 40, WHITE);
+    tft.drawChar(380, 120, 'Z', BLACK, BLACK, 2);
+    tft.drawChar(390, 100, 'Z', BLACK, BLACK, 3);
+    tft.drawChar(400, 80, 'Z', BLACK, BLACK, 4);
 }
 
 void checkBlink(){
@@ -116,34 +120,75 @@ void checkBlink(){
 }
 
 void checkSeepy(){
-  if ((millis()-interaction)>=2000){
+  if ((millis()-interaction)>=15000){
     Serial.println("ME DUERMO");
     seep();
     }
 }
 
-int wake= 0; // 0 = Dormido, 1-4 = Despertando, 5 = Despierto
+int wake= 0; 
 void seep(){
+  randomSeed()
+  int waketries = random(1,7);
   tft.fillRect(100, 150, 40, 40, BLACK);
   tft.fillRect(320, 150, 40, 40, BLACK);
   tft.fillRect(100, 180, 40, 10, WHITE);
   tft.fillRect(320, 180, 40, 10, WHITE);
   wake = 0;
-  while(wake < 5 ){
+  while(wake < waketries){
   checkWakeTouch();
+  zetas();
   }
+  Serial.println("Me Desperte");
   blinky();
+}
+
+void zetas() {
+    static unsigned long previousMillis = 0;
+    static unsigned long interval = 300;
+    static int step = 0;
+
+    unsigned long currentMillis = millis();
+
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis;
+
+        switch (step) {
+            case 0:
+                tft.drawChar(380, 120, 'Z', WHITE, BLACK, 2);
+                break;
+            case 1:
+                tft.drawChar(390, 100, 'Z', WHITE, BLACK, 3);
+                break;
+            case 2:
+                tft.drawChar(400, 80, 'Z', WHITE, BLACK, 4);
+                break;
+            case 3:
+                tft.drawChar(380, 120, 'Z', BLACK, BLACK, 2);
+                tft.drawChar(390, 100, 'Z', BLACK, BLACK, 3);
+                tft.drawChar(400, 80, 'Z', BLACK, BLACK, 4);
+                break;
+        }
+
+        step++;
+
+        if (step > 3) {
+            step = 0;
+        }
+    }
 }
 
 void checkWakeTouch(){
   TSPoint p = ts.getPoint();
-    pinMode(YP, OUTPUT);
-    pinMode(XM, OUTPUT);
-    if (p.z > MINPRESSURE && p.z < MAXPRESSURE) 
-    {
-       Serial.print("Dejame dormir, ya me molestaste"); Serial.print(wake); Serial.println(" veces");
-       wake++;
-    } 
+        pinMode(YP, OUTPUT);
+        pinMode(XM, OUTPUT);
+
+if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
+    wake++;
+    Serial.print("Dejame dormir, ya me molestaste "); Serial.print(wake); Serial.println(" veces");
+}
+
+    
 }
 
 void loop()
